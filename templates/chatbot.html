@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block title %} - Chatbot{% endblock %}
+
+{% block styles %}
+<style>
+    .chat-container {
+        height: calc(100vh - 300px);
+        min-height: 500px;
+    }
+    
+    .chat-sidebar {
+        max-height: 100%;
+        overflow-y: auto;
+    }
+    
+    .chat-messages {
+        height: calc(100% - 70px);
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message {
+        max-width: 80%;
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+    }
+    
+    .message-user {
+        align-self: flex-end;
+        background-color: var(--bs-primary);
+        color: white;
+        border-top-right-radius: 0.25rem;
+    }
+    
+    .message-ai {
+        align-self: flex-start;
+        background-color: var(--bs-secondary);
+        color: white;
+        border-top-left-radius: 0.25rem;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        opacity: 0.8;
+    }
+    
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        margin-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background-color: var(--bs-secondary);
+        border-radius: 50%;
+        margin-right: 4px;
+        animation: typing 1s infinite ease-in-out alternate;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0% {
+            transform: translateY(0px);
+        }
+        100% {
+            transform: translateY(-8px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-comments me-2"></i>Business Chatbot</h2>
+        <p class="lead">Get instant responses to your business inquiries</p>
+    </div>
+</div>
+
+<div class="row chat-container">
+    <!-- Chat Sessions Sidebar -->
+    <div class="col-md-3 chat-sidebar">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chat Sessions</h5>
+                <form action="{{ url_for('new_chat') }}" method="post">
+                    <input type="hidden" name="title" value="New Chat">
+                    <button type="submit" class="btn btn-sm btn-info">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                {% if chat_sessions %}
+                <div class="list-group list-group-flush">
+                    {% for chat in chat_sessions %}
+                    <a href="{{ url_for('view_chat', chat_id=chat.id) }}" 
+                       class="list-group-item list-group-item-action {% if current_chat and current_chat.id == chat.id %}active{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-truncate">{{ chat.title }}</div>
+                            <small>{{ chat.created_at.strftime('%m/%d') }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <p class="mb-0">No chat sessions yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="col-md-9">
+        <div class="card h-100">
+            {% if current_chat %}
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ current_chat.title }}</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#renameChatModal">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="{{ url_for('delete_chat', chat_id=current_chat.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this chat session?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
+                        <div>{{ message.content | nl2br }}</div>
+                        <div class="message-time text-end">{{ message.timestamp.strftime('%H:%M') }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted p-5 align-self-center">
+                        <i class="fas fa-robot fa-3x mb-3"></i>
+                        <h5>How can I assist you today?</h5>
+                        <p>Ask me about business communications, reports, or email drafting.</p>
+                    </div>
+                {% endif %}
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="card-footer p-2">
+                <form id="messageForm" action="{{ url_for('send_message', chat_id=current_chat.id) }}" method="post">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="messageInput" name="message" placeholder="Type your message..." required>
+                        <button class="btn btn-info" type="submit">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Rename Chat Modal -->
+            <div class="modal fade" id="renameChatModal" tabindex="-1" aria-labelledby="renameChatModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="renameChatModalLabel">Rename Chat Session</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="renameChatForm" action="#" method="post">
+                                <div class="mb-3">
+                                    <label for="chatTitle" class="form-label">Chat Title</label>
+                                    <input type="text" class="form-control" id="chatTitle" name="title" value="{{ current_chat.title }}" required>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('renameChatForm').submit()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card-body text-center p-5">
+                <i class="fas fa-comments fa-4x mb-3 text-muted"></i>
+                <h4>Start a New Conversation</h4>
+                <p>Begin chatting with our AI assistant for help with your business communications</p>
+                <form action="{{ url_for('new_chat') }}" method="post">
+                    <input type="hidden" name="title" value="New Chat">
+                    <button type="submit" class="btn btn-info mt-2">
+                        <i class="fas fa-plus me-1"></i> Start New Chat
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const typingIndicator = document.getElementById('typingIndicator');
+    
+    // Scroll to bottom of chat
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Handle message submission
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Don't submit if empty
+            if (!messageInput.value.trim()) {
+                return;
+            }
+            
+            const formData = new FormData(messageForm);
+            const message = messageInput.value;
+            
+            // Clear input and show typing indicator
+            messageInput.value = '';
+            messageInput.disabled = true;
+            
+            // Add user message to chat
+            const userMessageElement = document.createElement('div');
+            userMessageElement.className = 'message message-user';
+            userMessageElement.innerHTML = `
+                <div>${message}</div>
+                <div class="message-time text-end">${formatTime(new Date())}</div>
+            `;
+            chatMessages.appendChild(userMessageElement);
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'flex';
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Send message to server
+            fetch(messageForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error sending message');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Add AI message to chat
+                const aiMessageElement = document.createElement('div');
+                aiMessageElement.className = 'message message-ai';
+                aiMessageElement.innerHTML = `
+                    <div>${data.ai_message.content.replace(/\n/g, '<br>')}</div>
+                    <div class="message-time text-end">${formatTime(new Date(data.ai_message.timestamp))}</div>
+                `;
+                chatMessages.appendChild(aiMessageElement);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Enable input
+                messageInput.disabled = false;
+                messageInput.focus();
+            })
+            .catch(error => {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Show error message
+                const errorMessageElement = document.createElement('div');
+                errorMessageElement.className = 'message message-ai';
+                errorMessageElement.innerHTML = `
+                    <div class="text-danger">Error: ${error.message || 'Failed to get response'}</div>
+                    <div class="message-time text-end">${formatTime(new Date())}</div>
+                `;
+                chatMessages.appendChild(errorMessageElement);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Enable input
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                console.error('Error sending message:', error);
+            });
+        });
+    }
+    
+    // Format time as HH:MM
+    function formatTime(date) {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+});
+</script>
+{% endblock %}

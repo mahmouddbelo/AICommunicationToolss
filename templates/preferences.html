@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %} - Preferences{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-cog me-2"></i>Communication Preferences</h2>
+        <p class="lead">Customize how AI generates content for you</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="preferenceTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-pref" type="button" role="tab" aria-controls="email-pref" aria-selected="true">
+                            <i class="fas fa-envelope me-1"></i> Email
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#report-pref" type="button" role="tab" aria-controls="report-pref" aria-selected="false">
+                            <i class="fas fa-file-alt me-1"></i> Reports
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pref" type="button" role="tab" aria-controls="chat-pref" aria-selected="false">
+                            <i class="fas fa-comments me-1"></i> Chatbot
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('preferences') }}" method="post">
+                    <div class="tab-content" id="preferenceTabsContent">
+                        <!-- Email Preferences -->
+                        <div class="tab-pane fade show active" id="email-pref" role="tabpanel" aria-labelledby="email-tab">
+                            <h5 class="mb-4">Email Generation Preferences</h5>
+                            
+                            <div class="mb-3">
+                                <label for="email_tone" class="form-label">Preferred Tone</label>
+                                <select class="form-select" id="email_tone" name="email_tone">
+                                    <option value="professional" {% if preferences.email_tone == 'professional' %}selected{% endif %}>Professional</option>
+                                    <option value="friendly" {% if preferences.email_tone == 'friendly' %}selected{% endif %}>Friendly</option>
+                                    <option value="formal" {% if preferences.email_tone == 'formal' %}selected{% endif %}>Formal</option>
+                                    <option value="casual" {% if preferences.email_tone == 'casual' %}selected{% endif %}>Casual</option>
+                                    <option value="persuasive" {% if preferences.email_tone == 'persuasive' %}selected{% endif %}>Persuasive</option>
+                                </select>
+                                <div class="form-text">This tone will be used for generating email content.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email_length" class="form-label">Preferred Email Length</label>
+                                <select class="form-select" id="email_length" name="email_length">
+                                    <option value="short" {% if preferences.email_length == 'short' %}selected{% endif %}>Short (1-2 paragraphs)</option>
+                                    <option value="medium" {% if preferences.email_length == 'medium' %}selected{% endif %}>Medium (3-4 paragraphs)</option>
+                                    <option value="long" {% if preferences.email_length == 'long' %}selected{% endif %}>Long (5+ paragraphs)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email_signature" class="form-label">Email Signature (Optional)</label>
+                                <textarea class="form-control" id="email_signature" name="email_signature" rows="3">{{ preferences.email_signature or '' }}</textarea>
+                                <div class="form-text">This signature can be automatically added to your generated emails.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Report Preferences -->
+                        <div class="tab-pane fade" id="report-pref" role="tabpanel" aria-labelledby="report-tab">
+                            <h5 class="mb-4">Business Report Preferences</h5>
+                            
+                            <div class="mb-3">
+                                <label for="report_format" class="form-label">Preferred Format</label>
+                                <select class="form-select" id="report_format" name="report_format">
+                                    <option value="concise" {% if preferences.report_format == 'concise' %}selected{% endif %}>Concise</option>
+                                    <option value="detailed" {% if preferences.report_format == 'detailed' %}selected{% endif %}>Detailed</option>
+                                    <option value="bullet-points" {% if preferences.report_format == 'bullet-points' %}selected{% endif %}>Bullet Points</option>
+                                    <option value="executive" {% if preferences.report_format == 'executive' %}selected{% endif %}>Executive Summary</option>
+                                </select>
+                                <div class="form-text">This format will determine how your reports are structured.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="report_tone" class="form-label">Preferred Tone</label>
+                                <select class="form-select" id="report_tone" name="report_tone">
+                                    <option value="formal" {% if preferences.report_tone == 'formal' %}selected{% endif %}>Formal</option>
+                                    <option value="analytical" {% if preferences.report_tone == 'analytical' %}selected{% endif %}>Analytical</option>
+                                    <option value="informative" {% if preferences.report_tone == 'informative' %}selected{% endif %}>Informative</option>
+                                    <option value="persuasive" {% if preferences.report_tone == 'persuasive' %}selected{% endif %}>Persuasive</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Chatbot Preferences -->
+                        <div class="tab-pane fade" id="chat-pref" role="tabpanel" aria-labelledby="chat-tab">
+                            <h5 class="mb-4">Chatbot Communication Preferences</h5>
+                            
+                            <div class="mb-3">
+                                <label for="chat_tone" class="form-label">Preferred Tone</label>
+                                <select class="form-select" id="chat_tone" name="chat_tone">
+                                    <option value="helpful" {% if preferences.chat_tone == 'helpful' %}selected{% endif %}>Helpful</option>
+                                    <option value="professional" {% if preferences.chat_tone == 'professional' %}selected{% endif %}>Professional</option>
+                                    <option value="friendly" {% if preferences.chat_tone == 'friendly' %}selected{% endif %}>Friendly</option>
+                                    <option value="concise" {% if preferences.chat_tone == 'concise' %}selected{% endif %}>Concise</option>
+                                </select>
+                                <div class="form-text">This will influence how the chatbot responds to your inquiries.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">API Integration Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Gemini API</h6>
+                            <p class="mb-0 text-muted small">Google's large language model API</p>
+                        </div>
+                        <span class="badge bg-{{ 'success' if config.get('GEMINI_API_KEY') else 'danger' }} rounded-pill">
+                            {{ 'Connected' if config.get('GEMINI_API_KEY') else 'Not Connected' }}
+                        </span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Groq API</h6>
+                            <p class="mb-0 text-muted small">High-performance LLM API (fallback)</p>
+                        </div>
+                        <span class="badge bg-{{ 'success' if config.get('GROQ_API_KEY') else 'warning' }} rounded-pill">
+                            {{ 'Connected' if config.get('GROQ_API_KEY') else 'Not Connected' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fas fa-info-circle me-2"></i> 
+                    API keys are managed through environment variables. Contact your administrator if you need to update API connections.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

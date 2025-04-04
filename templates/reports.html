@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %} - Business Reports{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-file-alt me-2"></i>Business Reports</h2>
+        <p class="lead">Generate and manage AI-powered business reports</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Reports List Sidebar -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Reports</h5>
+                <a href="{{ url_for('new_report') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus me-1"></i> New
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if reports %}
+                <div class="list-group list-group-flush">
+                    {% for report in reports %}
+                    <a href="{{ url_for('view_report', report_id=report.id) }}" 
+                       class="list-group-item list-group-item-action {% if selected_report and selected_report.id == report.id %}active{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-truncate">{{ report.title }}</h6>
+                            <small>{{ report.created_at.strftime('%b %d') }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate {% if selected_report and selected_report.id == report.id %}text-white{% else %}text-muted{% endif %}">
+                            {{ report.report_type }}
+                        </p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                    <p>No reports yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Content Area -->
+    <div class="col-md-8">
+        <!-- New Report Form -->
+        {% if new_report %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Generate New Business Report</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('new_report') }}" method="post">
+                    <div class="mb-3">
+                        <label for="report_type" class="form-label">Report Type</label>
+                        <select class="form-select" id="report_type" name="report_type" required>
+                            <option value="" selected disabled>Select report type</option>
+                            <option value="financial_summary">Financial Summary</option>
+                            <option value="market_analysis">Market Analysis</option>
+                            <option value="project_status">Project Status</option>
+                            <option value="meeting_minutes">Meeting Minutes</option>
+                            <option value="quarterly_review">Quarterly Review</option>
+                            <option value="competitor_analysis">Competitor Analysis</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="context" class="form-label">Report Context & Data</label>
+                        <textarea class="form-control" id="context" name="context" rows="8" placeholder="Provide the raw data, bullet points, or context information for the report. Include all key information you want to be summarized and analyzed." required></textarea>
+                        <div class="form-text">Include facts, figures, and key points you want to include in the report.</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-robot me-1"></i> Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Report Template Examples -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Template Examples</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="reportTemplates">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFinancial">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancial" aria-expanded="false" aria-controls="collapseFinancial">
+                                Financial Summary Example
+                            </button>
+                        </h2>
+                        <div id="collapseFinancial" class="accordion-collapse collapse" aria-labelledby="headingFinancial" data-bs-parent="#reportTemplates">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Context Example:</strong></p>
+                                <p>Q3 2023 Financial Data:
+- Total Revenue: $1.2M (15% increase from Q2)
+- Operating Expenses: $750K
+- Net Profit: $450K (8% increase YoY)
+- Customer Acquisition Cost: $120 (down from $135 in Q2)
+- Lifetime Value: $850
+- Cash reserves: $3.5M
+- Accounts receivable: $280K (30% over 60 days)
+- Marketing spend: $200K (ROI of 3.2)
+- Top product line: Enterprise Solutions ($450K revenue)
+
+Our goals were $1.1M revenue and $400K profit. Need to address the growing accounts receivable issue.</p>
+                                <button class="btn btn-sm btn-outline-success" onclick="document.getElementById('context').value = this.previousElementSibling.textContent; document.getElementById('report_type').value = 'financial_summary';">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingProject">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProject" aria-expanded="false" aria-controls="collapseProject">
+                                Project Status Example
+                            </button>
+                        </h2>
+                        <div id="collapseProject" class="accordion-collapse collapse" aria-labelledby="headingProject" data-bs-parent="#reportTemplates">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Context Example:</strong></p>
+                                <p>Website Redesign Project Status:
+- Timeline: Started June 5, planned completion Sept 30
+- Current progress: 65% complete (5% behind schedule)
+- Budget: $85K allocated, $60K spent to date
+- Team: 2 designers, 3 developers, 1 PM
+- Completed: UI design, database restructuring, mobile mockups
+- In progress: Frontend development (75% done), content migration (40% done)
+- Blockers: Waiting for client approval on homepage design
+- Risks: Content migration taking longer than expected
+- Next steps: Finalize homepage this week, start QA testing by Sep 15</p>
+                                <button class="btn btn-sm btn-outline-success" onclick="document.getElementById('context').value = this.previousElementSibling.textContent; document.getElementById('report_type').value = 'project_status';">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingMeeting">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMeeting" aria-expanded="false" aria-controls="collapseMeeting">
+                                Meeting Minutes Example
+                            </button>
+                        </h2>
+                        <div id="collapseMeeting" class="accordion-collapse collapse" aria-labelledby="headingMeeting" data-bs-parent="#reportTemplates">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Context Example:</strong></p>
+                                <p>Strategic Planning Meeting - August 25, 2023
+Attendees: Sarah (CEO), Michael (COO), Jennifer (CMO), David (CTO), Lisa (CFO)
+
+Topics Discussed:
+1. Q4 Revenue Targets
+- Current projection: $1.5M (Michael)
+- Need 20% growth to hit annual goals (Lisa)
+- Enterprise sales pipeline looking strong (Jennifer)
+
+2. New Product Launch
+- Beta testing complete with 90% positive feedback (David)
+- Marketing campaign ready to launch Sept 15 (Jennifer)
+- Sales team training scheduled for next week (Michael)
+- Revenue impact: estimated $300K in Q4 (Lisa)
+
+3. Team Expansion
+- Need to hire 3 developers by October (David)
+- Sales team requesting 2 additional SDRs (Michael)
+- Budget impact: $80K additional in Q4 (Lisa)
+
+4. Office Relocation
+- Current lease ends Dec 31
+- Three potential locations identified
+- Decision needed by Sept 30
+- Budget: max $15K/month (Lisa)
+
+Action Items:
+- Jennifer to finalize product launch PR by Sept 1
+- David to expedite developer job postings this week
+- Michael to provide updated sales forecast by Aug 31
+- Lisa to prepare relocation cost comparison by Sept 15
+- Sarah to schedule board update for Sept 10</p>
+                                <button class="btn btn-sm btn-outline-success" onclick="document.getElementById('context').value = this.previousElementSibling.textContent; document.getElementById('report_type').value = 'meeting_minutes';">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% elif selected_report %}
+        <!-- View Selected Report -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ selected_report.title }}</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="copyToClipboard('report-content')">
+                        <i class="fas fa-copy me-1"></i> Copy
+                    </button>
+                    <form action="{{ url_for('delete_report', report_id=selected_report.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this report?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="mb-2"><strong>Report Type:</strong> {{ selected_report.report_type.replace('_', ' ').title() }}</div>
+                    <div class="mb-2"><strong>Generated On:</strong> {{ selected_report.created_at.strftime('%B %d, %Y at %H:%M') }}</div>
+                    <hr>
+                    <div id="report-content" class="report-content markdown-body">{{ selected_report.content | nl2br }}</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="accordion" id="sourceDataAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingSourceData">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSourceData" aria-expanded="false" aria-controls="collapseSourceData">
+                                View Source Data
+                            </button>
+                        </h2>
+                        <div id="collapseSourceData" class="accordion-collapse collapse" aria-labelledby="headingSourceData" data-bs-parent="#sourceDataAccordion">
+                            <div class="accordion-body">
+                                <pre class="source-data">{{ selected_report.source_data }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-body text-center p-5">
+                <i class="fas fa-file-alt fa-4x mb-3 text-muted"></i>
+                <h4>No Report Selected</h4>
+                <p>Select a report from the list or create a new one</p>
+                <a href="{{ url_for('new_report') }}" class="btn btn-success mt-2">
+                    <i class="fas fa-plus me-1"></i> Create New Report
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    const range = document.createRange();
+    range.selectNode(el);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    try {
+        document.execCommand('copy');
+        showAlert('Report content copied to clipboard!', 'success');
+    } catch (err) {
+        showAlert('Failed to copy text. Please try again.', 'danger');
+    }
+    
+    selection.removeAllRanges();
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alertDiv);
+        bsAlert.close();
+    }, 3000);
+}
+</script>
+{% endblock %}

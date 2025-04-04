@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %} - Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-chart-line me-2"></i>Dashboard</h2>
+        <p class="lead">Welcome back, {{ current_user.username }}! Here's your communication hub.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Email Drafts</h5>
+                        <h2 class="card-text">{{ email_count }}</h2>
+                    </div>
+                    <i class="fas fa-envelope fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-primary border-0">
+                <a href="{{ url_for('email_drafts') }}" class="text-white text-decoration-none">View All <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Business Reports</h5>
+                        <h2 class="card-text">{{ report_count }}</h2>
+                    </div>
+                    <i class="fas fa-file-alt fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-success border-0">
+                <a href="{{ url_for('reports') }}" class="text-white text-decoration-none">View All <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Chat Sessions</h5>
+                        <h2 class="card-text">{{ chat_count }}</h2>
+                    </div>
+                    <i class="fas fa-comments fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-info border-0">
+                <a href="{{ url_for('chatbot') }}" class="text-white text-decoration-none">View All <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('new_email') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> New Email Draft
+                    </a>
+                    <a href="{{ url_for('new_report') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i> New Business Report
+                    </a>
+                    <form action="{{ url_for('new_chat') }}" method="post" class="d-inline">
+                        <input type="hidden" name="title" value="New Chat">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-plus me-1"></i> New Chat Session
+                        </button>
+                    </form>
+                    <a href="{{ url_for('preferences') }}" class="btn btn-secondary">
+                        <i class="fas fa-cog me-1"></i> Update Preferences
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Items -->
+<div class="row">
+    <!-- Recent Emails -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Emails</h5>
+                <a href="{{ url_for('email_drafts') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_emails %}
+                <div class="list-group">
+                    {% for email in recent_emails %}
+                    <a href="{{ url_for('view_email', email_id=email.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-truncate">{{ email.subject }}</h6>
+                            <small>{{ email.created_at.strftime('%b %d') }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate text-muted">{{ email.content[:80] }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-envelope fa-3x mb-3 text-muted"></i>
+                    <p>No email drafts yet</p>
+                    <a href="{{ url_for('new_email') }}" class="btn btn-sm btn-primary">Create First Email</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Reports -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Reports</h5>
+                <a href="{{ url_for('reports') }}" class="btn btn-sm btn-outline-success">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_reports %}
+                <div class="list-group">
+                    {% for report in recent_reports %}
+                    <a href="{{ url_for('view_report', report_id=report.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-truncate">{{ report.title }}</h6>
+                            <small>{{ report.created_at.strftime('%b %d') }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate text-muted">{{ report.report_type }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                    <p>No reports yet</p>
+                    <a href="{{ url_for('new_report') }}" class="btn btn-sm btn-success">Create First Report</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Chats -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Chats</h5>
+                <a href="{{ url_for('chatbot') }}" class="btn btn-sm btn-outline-info">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_chats %}
+                <div class="list-group">
+                    {% for chat in recent_chats %}
+                    <a href="{{ url_for('view_chat', chat_id=chat.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ chat.title }}</h6>
+                            <small>{{ chat.created_at.strftime('%b %d') }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate text-muted">
+                            {% set last_message = chat.messages.order_by(ChatMessage.timestamp.desc()).first() if chat.messages else None %}
+                            {% if last_message %}
+                                {{ "You: " if last_message.is_user else "AI: " }}{{ last_message.content[:60] }}
+                            {% else %}
+                                No messages yet
+                            {% endif %}
+                        </p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-comments fa-3x mb-3 text-muted"></i>
+                    <p>No chat sessions yet</p>
+                    <form action="{{ url_for('new_chat') }}" method="post">
+                        <input type="hidden" name="title" value="New Chat">
+                        <button type="submit" class="btn btn-sm btn-info">Start First Chat</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
