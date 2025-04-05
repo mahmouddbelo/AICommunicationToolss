@@ -1,6 +1,11 @@
 # AI-Powered Communication Tools
 
 comprehensive AI-powered communication platform designed to enhance business communication through automation. The platform leverages the power of Google's Gemini API and Groq's API to provide intelligent communication tools, including email draft generation, business report creation, and an interactive chatbot.
+## 🔍 Project Screenshot
+### 📊 Dashboard View
+
+![Screenshot](https://github.com/mahmouddbelo/AICommunicationToolss/blob/master/screeen.png)
+
 
 ## Features
 
