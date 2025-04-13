@@ -1,18 +1,101 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
-from models import User, EmailDraft, Report, ChatSession, ChatMessage, UserPreference
+from models import User, EmailDraft, Report, ChatSession, ChatMessage, UserPreference, AutoReply
 from ai_services import AIService
 import logging
 
 # Initialize AI service
 ai_service = AIService()
 
+
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     return render_template('login.html')
+
+
+@app.route('/auto-reply')
+@login_required
+def auto_replies():
+    replies = AutoReply.query.filter_by(user_id=current_user.id).order_by(AutoReply.created_at.desc()).all()
+    return render_template('auto_replies.html', replies=replies)
+
+@app.route('/auto-reply/new', methods=['GET', 'POST'])
+@login_required
+def new_auto_reply():
+    if request.method == 'POST':
+        message = request.form.get('message')
+        context = request.form.get('context', '')
+        
+        if not message:
+            flash('Please provide the message you want to reply to', 'danger')
+            return redirect(url_for('new_auto_reply'))
+        
+        # Get user preferences
+        preferences = UserPreference.query.filter_by(user_id=current_user.id).first()
+        
+        # Generate auto-reply using AI
+        try:
+            reply = ai_service.generate_auto_reply(
+                incoming_message=message,
+                context=context,
+                preferences=preferences
+            )
+            
+            # Create new auto-reply record
+            auto_reply = AutoReply(
+                original_message=message,
+                reply_subject=reply['subject'],
+                reply_content=reply['body'],
+                context=context,
+                user_id=current_user.id
+            )
+            
+            db.session.add(auto_reply)
+            db.session.commit()
+            
+            flash('Auto-reply generated successfully!', 'success')
+            return render_template('auto_replies.html', 
+                                 new_reply=True,
+                                 generated_reply=reply,
+                                 original_message=message)
+        except Exception as e:
+            logging.error(f"Error generating auto-reply: {str(e)}")
+            flash(f'Error generating auto-reply: {str(e)}', 'danger')
+            return redirect(url_for('new_auto_reply'))
+    
+    return render_template('auto_replies.html', new_reply=True)
+
+@app.route('/auto-reply/<int:reply_id>')
+@login_required
+def view_auto_reply(reply_id):
+    reply = AutoReply.query.get_or_404(reply_id)
+    
+    # Check if the reply belongs to the current user
+    if reply.user_id != current_user.id:
+        flash('You do not have permission to view this reply', 'danger')
+        return redirect(url_for('auto_replies'))
+    
+    return render_template('auto_replies.html', selected_reply=reply)
+
+@app.route('/auto-reply/<int:reply_id>/delete', methods=['POST'])
+@login_required
+def delete_auto_reply(reply_id):
+    reply = AutoReply.query.get_or_404(reply_id)
+    
+    # Check if the reply belongs to the current user
+    if reply.user_id != current_user.id:
+        flash('You do not have permission to delete this reply', 'danger')
+        return redirect(url_for('auto_replies'))
+    
+    db.session.delete(reply)
+    db.session.commit()
+    
+    flash('Auto-reply deleted successfully', 'success')
+    return redirect(url_for('auto_replies'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

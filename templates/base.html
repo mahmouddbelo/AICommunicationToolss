@@ -38,6 +38,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'auto_replies' or request.endpoint == 'new_auto_reply' or request.endpoint == 'view_auto_reply' %}active{% endif %}" href="{{ url_for('auto_replies') }}">
+                            <i class="fas fa-reply me-1"></i> Auto Replies
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'reports' or request.endpoint == 'new_report' or request.endpoint == 'view_report' %}active{% endif %}" href="{{ url_for('reports') }}">
                             <i class="fas fa-file-alt me-1"></i> Reports
                         </a>
@@ -69,6 +74,8 @@
             </div>
         </div>
     </nav>
+
+    <!-- باقي الملف كما هو -->
 
     <!-- Flash messages -->
     <div class="container mt-3">

@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     reports = db.relationship('Report', backref='author', lazy='dynamic')
     chat_sessions = db.relationship('ChatSession', backref='user', lazy='dynamic')
     preferences = db.relationship('UserPreference', backref='user', uselist=False)
+    auto_replies = db.relationship('AutoReply', backref='user', lazy='dynamic')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -92,5 +93,23 @@ class UserPreference(db.Model):
     # Chat preferences
     chat_tone = db.Column(db.String(50), default="helpful")
     
+    # Auto-reply preferences
+    auto_reply_tone = db.Column(db.String(50), default="professional")
+    auto_reply_style = db.Column(db.String(50), default="concise")
+    auto_reply_signature = db.Column(db.Boolean, default=True)
+
     def __repr__(self):
         return f'<UserPreference for user_id {self.user_id}>'
+
+
+class AutoReply(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    original_message = db.Column(db.Text, nullable=False)
+    reply_subject = db.Column(db.String(200))
+    reply_content = db.Column(db.Text, nullable=False)
+    context = db.Column(db.Text)  # Additional context provided by user
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def __repr__(self):
+        return f'<AutoReply to message: {self.original_message[:50]}...>'

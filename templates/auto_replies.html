@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %} - Auto Replies{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-reply me-2"></i>Auto Replies</h2>
+        <p class="lead">Generate and manage AI-powered automatic responses</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Reply List Sidebar -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Replies</h5>
+                <a href="{{ url_for('new_auto_reply') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i> New
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if replies %}
+                <div class="list-group list-group-flush">
+                    {% for reply in replies %}
+                    <a href="{{ url_for('view_auto_reply', reply_id=reply.id) }}" 
+                       class="list-group-item list-group-item-action {% if selected_reply and selected_reply.id == reply.id %}active{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-truncate">
+                                {% if reply.reply_subject %}
+                                    {{ reply.reply_subject }}
+                                {% else %}
+                                    Auto Reply
+                                {% endif %}
+                            </h6>
+                            <small>{{ reply.created_at.strftime('%b %d') }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate {% if selected_reply and selected_reply.id == reply.id %}text-white{% else %}text-muted{% endif %}">
+                            {{ reply.original_message[:60] }}...
+                        </p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-reply fa-3x mb-3 text-muted"></i>
+                    <p>No auto replies yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Content Area -->
+    <div class="col-md-8">
+        <!-- New Reply Form -->
+        {% if new_reply %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Generate New Auto Reply</h5>
+            </div>
+            <div class="card-body">
+                {% if generated_reply %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>Reply generated successfully!
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Original Message:</h6>
+                    <div class="card card-body bg-light mb-3">
+                        {{ original_message }}
+                    </div>
+                    
+                    <h6>Generated Reply:</h6>
+                    <div class="card card-body bg-light">
+                        {% if generated_reply.subject %}
+                        <div class="mb-2"><strong>Subject:</strong> {{ generated_reply.subject }}</div>
+                        <hr>
+                        {% endif %}
+                        <div>{{ generated_reply.body | nl2br }}</div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auto_replies') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Discard
+                    </a>
+                </div>
+                {% else %}
+                <form action="{{ url_for('new_auto_reply') }}" method="post">
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message to Reply To</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" placeholder="Paste the message you want to reply to here..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="context" class="form-label">Additional Context (Optional)</label>
+                        <textarea class="form-control" id="context" name="context" rows="3" placeholder="Provide any additional context that should inform the reply (e.g., your availability, specific points to address, etc.)"></textarea>
+                        <div class="form-text">This helps generate a more accurate and personalized response.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-robot me-1"></i> Generate Auto Reply
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Reply Examples -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Example Use Cases</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="replyExamples">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                Out of Office Reply
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#replyExamples">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Message:</strong></p>
+                                <p class="mb-2">Hi, I wanted to follow up on our project timeline. When can we schedule a call to discuss?</p>
+                                
+                                <p class="mb-1"><strong>Context:</strong></p>
+                                <p>I'll be out of office from June 10-17 with limited email access. My colleague Sarah (sarah@example.com) can help with urgent matters.</p>
+                                
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="useExample(this)">Use Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Meeting Request Response
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#replyExamples">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Message:</strong></p>
+                                <p class="mb-2">Would you be available for a meeting next Tuesday at 2pm to discuss the proposal?</p>
+                                
+                                <p class="mb-1"><strong>Context:</strong></p>
+                                <p>I'm available Wednesday afternoon or Thursday morning. Please suggest alternative times if Tuesday doesn't work.</p>
+                                
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="useExample(this)">Use Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Customer Inquiry Response
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#replyExamples">
+                            <div class="accordion-body">
+                                <p class="mb-1"><strong>Message:</strong></p>
+                                <p class="mb-2">I'm interested in your premium service but have questions about the pricing and features. Can you provide more details?</p>
+                                
+                                <p class="mb-1"><strong>Context:</strong></p>
+                                <p>Attach our pricing PDF and schedule a demo call. Our team is available M-F 9-5.</p>
+                                
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="useExample(this)">Use Example</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% elif selected_reply %}
+        <!-- View Selected Reply -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    {% if selected_reply.reply_subject %}
+                        {{ selected_reply.reply_subject }}
+                    {% else %}
+                        Auto Reply
+                    {% endif %}
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="copyToClipboard('reply-content')">
+                        <i class="fas fa-copy me-1"></i> Copy
+                    </button>
+                    <form action="{{ url_for('delete_auto_reply', reply_id=selected_reply.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this auto reply?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Original Message:</h6>
+                    <div class="card card-body bg-light mb-3">
+                        {{ selected_reply.original_message }}
+                    </div>
+                    
+                    {% if selected_reply.context %}
+                    <h6>Context Provided:</h6>
+                    <div class="card card-body bg-light mb-3">
+                        {{ selected_reply.context }}
+                    </div>
+                    {% endif %}
+                    
+                    <h6>Generated Reply:</h6>
+                    <div class="card card-body bg-light">
+                        {% if selected_reply.reply_subject %}
+                        <div class="mb-2"><strong>Subject:</strong> {{ selected_reply.reply_subject }}</div>
+                        <hr>
+                        {% endif %}
+                        <div id="reply-content">{{ selected_reply.reply_content | nl2br }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                Created on {{ selected_reply.created_at.strftime('%B %d, %Y at %H:%M') }}
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-body text-center p-5">
+                <i class="fas fa-reply-all fa-4x mb-3 text-muted"></i>
+                <h4>No Auto Reply Selected</h4>
+                <p>Select an auto reply from the list or create a new one</p>
+                <a href="{{ url_for('new_auto_reply') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-1"></i> Create New Auto Reply
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    const range = document.createRange();
+    range.selectNode(el);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    try {
+        document.execCommand('copy');
+        showAlert('Reply content copied to clipboard!', 'success');
+    } catch (err) {
+        showAlert('Failed to copy text. Please try again.', 'danger');
+    }
+    
+    selection.removeAllRanges();
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alertDiv);
+        bsAlert.close();
+    }, 3000);
+}
+
+function useExample(button) {
+    const accordionBody = button.closest('.accordion-body');
+    const message = accordionBody.querySelector('p:nth-of-type(2)').textContent;
+    const context = accordionBody.querySelector('p:nth-of-type(4)').textContent;
+    
+    document.getElementById('message').value = message;
+    document.getElementById('context').value = context;
+    
+    // Close the accordion
+    const accordionItem = button.closest('.accordion-item');
+    const collapse = accordionItem.querySelector('.accordion-collapse');
+    new bootstrap.Collapse(collapse, {toggle: true});
+}
+</script>
+{% endblock %}

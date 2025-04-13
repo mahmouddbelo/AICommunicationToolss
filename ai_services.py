@@ -127,6 +127,62 @@ class AIService:
             "body": body
         }
     
+    def generate_auto_reply(self, incoming_message, context=None, preferences=None):
+        """Generate an automatic reply for an incoming message."""
+        context_text = f"Context: {context}\n" if context else ""
+        
+        # Safely get preferences with defaults
+        pref_text = ""
+        if preferences:
+            tone = getattr(preferences, 'auto_reply_tone', 'professional')
+            style = getattr(preferences, 'auto_reply_style', 'concise')
+            signature = getattr(preferences, 'auto_reply_signature', True)
+            
+            pref_text = f"""
+            Tone: {tone}
+            Style: {style}
+            Include signature: {signature}
+            """
+        
+        prompt = f"""
+        Generate an appropriate automatic reply to the following message:
+        
+        Message received:
+        {incoming_message}
+        
+        {context_text}
+        User preferences:
+        {pref_text}
+        
+        The reply should be professional and appropriate for a business context.
+        If the message requires specific information you don't have, indicate 
+        that you'll follow up with more details later.
+        
+        Format the response with a subject line (if email) and reply body.
+        """
+        
+        response = self.get_response(prompt)
+        
+        # Extract subject if present
+        subject = "Re: Your Message"
+        body = response
+        
+        if "Subject:" in response:
+            parts = response.split("Subject:", 1)
+            if len(parts) > 1:
+                subject_part = parts[1].strip()
+                if "\n" in subject_part:
+                    subject = subject_part.split("\n", 1)[0].strip()
+                    body = parts[1].split("\n", 1)[1].strip() if len(parts[1].split("\n", 1)) > 1 else ""
+                else:
+                    subject = subject_part
+                    body = ""
+        
+        return {
+            "subject": subject,
+            "body": body
+        }
+        
     def generate_report(self, context, report_type, preferences=None):
         """Generate a business report based on context and type"""
         pref_text = ""
